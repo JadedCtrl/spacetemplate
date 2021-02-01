@@ -1,0 +1,112 @@
+#!/bin/sh
+# --------------------------------------
+# name: spacetemplate
+# main: <jadedctrl@teknik.io>
+# lisc: MIT
+# date: 2021
+# --------------------------------------
+
+# Recursively apply a template directory to a target directory.
+function apply_template {
+	local template="$1"
+	local target="$2"
+
+	echo "$target…"
+	copy_template "$template" "$target"
+
+	apply_specific all "$template" "$target"
+
+	for file in "$template"/*; do
+		local basename="$(basename "$file")"
+
+		if test -d "${target}/$basename" \
+			-a ! "$basename" = '*'
+		then
+			if test -h "$file"; then file="$(readlink "$file")"; fi
+			apply_template "$file" "${target}/$basename"
+		fi
+	done
+
+	apply_specific default "$template" "$target"
+}
+
+# Check if a specific template folder (_all_ or _default_) exists for given
+# template and target, and apply where necessary.
+function apply_specific {
+	local type="$1"
+	local template="$2"
+	local target="$3"
+
+	if test -e "${template}/_${type}_"; then
+		local type_template="${template}/_${type}_"
+
+		if test -h "$type_template"; then
+			type_template="$(readlink "$type_template")"
+		fi
+
+		for file in "$target"/*; do
+			local basename="$(basename "$file")"
+			local apply=0
+			if test "$basename" = '*'; then break; fi
+
+			if test "$type" = "all"; then apply=1; fi
+			if test ! -d "${template}/$basename"; then apply=1; fi
+
+			if test "$apply" -eq 1; then
+				apply_template "$type_template" "$file" 0
+			fi
+		done
+	fi
+}
+
+
+# Actually copy over attributes from template file to target file
+function copy_template {
+	local template="$1"
+	local target="$2"
+
+	if test ! -d "$target"; then return; fi
+	if test -h "$template"; then template="$(readlink "$template")"; fi
+	if test ! -d "$template"; then return; fi
+
+	catattr -r _trk/pinfo_le "$target" 2> /dev/null \
+	> "$TEMP"
+
+	copyattr "$template" "$target"
+	addattr -f "$TEMP" -t raw _trk/pinfo_le "$target" 2> /dev/null
+
+	echo "" \
+	> "$TEMP"
+}
+
+
+function help {
+	echo "usage: $(basename $0) [-h] templatedir directory"
+	echo
+	echo \
+"Makes a target directory have attributes matching the templatedir, according
+to certain rules. Useful if you're particular about where folders' windows
+should be.
+
+See the README for information on the structure of template dirs."
+	exit 1
+}
+
+
+while getopts ":h" arg; do
+	case $arg in
+		h) help;;
+	esac
+done
+
+shift $(($OPTIND - 1))
+TEMPLATE=$1
+TARGET=$2
+
+if test -z "$TEMPLATE" -o -z "$TARGET"; then help; fi
+if test ! -e "$TEMPLATE" -o ! -e "$TARGET"; then help; fi
+
+TEMP="$(mktemp)"
+apply_template "$TEMPLATE" "$TARGET"
+
+rm "$TEMP"
