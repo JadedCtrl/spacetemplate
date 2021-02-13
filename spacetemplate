@@ -69,11 +69,22 @@ function copy_template {
 	if test -h "$template"; then template="$(readlink "$template")"; fi
 	if test ! -d "$template"; then return; fi
 
+	# We want to keep it's icon position
 	catattr -r _trk/pinfo_le "$target" 2> /dev/null \
 	> "$TEMP"
 
 	copyattr "$template" "$target"
 	addattr -f "$TEMP" -t raw _trk/pinfo_le "$target" 2> /dev/null
+
+	# No matter what, scroll position is gonna be messed up. Blanking this
+	# makes it mess up slightly less, ime.
+	catattr -r _trk/viewstate_le "$target" \
+	| xxd \
+	| sed 's%00000010:.*%00000010: 0000 0000 0000 0000 0000 0000 0000 0000%'\
+	| xxd -r \
+	> "$TEMP"
+	addattr -f "$TEMP" -t raw _trk/viewstate_le "$target" 2> /dev/null
+
 
 	echo "" \
 	> "$TEMP"
