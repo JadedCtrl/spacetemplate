@@ -22,6 +22,10 @@ $ spacetemplate templatefolder folder
 
 There are no arguments― it'll just apply the template folder to the folder.
 
+I've found it's a great pair to Filer! You can make a location rule, e.g.,
+for any subdirectories of a folder, that'll apply that folder's template
+automatically. Filer's a great program c:
+
 
 ========================================
 TEMPLATES

@@ -118,6 +118,9 @@ if test -z "$TEMPLATE" -o -z "$TARGET"; then help; fi
 if test ! -e "$TEMPLATE" -o ! -e "$TARGET"; then help; fi
 
 TEMP="$(mktemp)"
+
+notify --title SpaceTemplate "Applying template to ${TARGET}…"
 apply_template "$TEMPLATE" "$TARGET"
+notify --title SpaceTemplate "Template applied"
 
 rm "$TEMP"
