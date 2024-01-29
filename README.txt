@@ -113,4 +113,4 @@ Still not very interesting. Dang. Well, you get the point lol
 BORING STUFF
 ========================================
 MIT License
-Jaidyn Ann, <jadedctrl@teknik.io>
+Jaidyn Ann, <jadedctrl@posteo.at>
